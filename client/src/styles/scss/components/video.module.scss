@@ -1,0 +1,47 @@
+@use '../abstracts/mixins';
+
+.userVideo {
+  // layout
+  grid-column: 1 / 13;
+  grid-row: 1 / 11;
+  align-self: stretch;
+
+  // child layout
+  @include mixins.center;
+  overflow: hidden;
+
+  // styling
+  // padding: 20px;
+  background-color: #000000;
+  border-radius: 20px;
+}
+
+.myVideo {
+  // layout
+  grid-column: 1 / 13;
+  grid-row: 8 / 11;
+  height: 100%;
+  // width: 20%;
+  justify-self: end;
+  align-self: end;
+
+  // child layout
+  @include mixins.center;
+
+  // styling
+  // padding: 20px;
+  background-color: #000000;
+  border-radius: 17px;
+  overflow: hidden;
+}
+
+video {
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 1200px) {
+  .myVideo {
+    width: 35%;
+  }
+}
