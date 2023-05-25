@@ -13,7 +13,7 @@ const SocketContextProvider = ({ children }) => {
   const [call, setCall] = useState({ isReceivingCall: false });
   const [callAccepted, setCallAccepted] = useState(false);
   const [callEnded, setCallEnded] = useState(false);
-  const [name, setName] = useState("Dhruv");
+  const [name, setName] = useState("Ishaan");
 
   const myVideo = useRef();
   const userVideo = useRef();
