@@ -43,7 +43,6 @@ mediasoup must run on a server with a public IP and open UDP ports, so the backe
 | `apps/signaling` | Signaling server (later also hosts mediasoup) |
 | `apps/web` | Next.js client |
 | `packages/shared` | Types shared by client and server, starting with the Socket.IO event contract |
-| `legacy/client` | Original CRA client, kept for reference until `apps/web` replaces it |
 
 ---
 
@@ -51,14 +50,14 @@ mediasoup must run on a server with a public IP and open UDP ports, so the backe
 
 - [x] **0.1 Monorepo restructure.** npm workspaces with `apps/signaling`, `packages/shared` and a single lockfile; the old client moves to `legacy/client`. *Why:* one install command, and a typed contract between client and server.
 - [x] **0.2 Signaling server in TypeScript.** Typed events from `@together/shared`, environment-based config, health check endpoint. Same behaviour as before. *Why:* a typed base for everything that follows.
-- [ ] **0.3 Next.js web app.** Scaffold `apps/web` in TypeScript with static export and port the existing pages (home, call); then delete `legacy/client`. *Why:* the old react-scripts 4 client cannot build on Node 17+.
+- [x] **0.3 Next.js web app.** Scaffold `apps/web` in TypeScript with static export and port the existing pages (home, call); then delete `legacy/client`. *Why:* the old react-scripts 4 client cannot build on Node 17+. Also fixed #7 early, because Next.js's async navigation made that race fail on every call.
 - [ ] **0.4 Docker Compose for development.** Postgres, Redis and coturn. *Why:* the whole backend runs locally with one command.
 - [ ] **0.5 Tooling and CI.** ESLint, Prettier, type checking, and a GitHub Actions pipeline. *Why:* every push is checked from the start.
 
 ## Phase 1 — Production-quality 1:1 calling
 
 - [ ] **1.1 `useLocalMedia` hook.** Request the camera once; handle denied permission and non-HTTPS pages; stop tracks on leave. *Fixes audit #6, #8, #10, #13.*
-- [ ] **1.2 Native `RTCPeerConnection` wrapper.** Replaces simple-peer, with proper error handling. *Fixes #7, #9, #14 and removes the Node polyfills.*
+- [ ] **1.2 Native `RTCPeerConnection` wrapper.** Replaces simple-peer, with proper error handling. *Fixes #9, #14 and drops simple-peer (#7 was fixed in 0.3).*
 - [ ] **1.3 Rooms and invite links.** `/room/[id]` instead of socket IDs; join and leave are safe to repeat. *Fixes #16, #18.*
 - [ ] **1.4 Call lifecycle events.** Decline, hang-up and "other person left" are sent only to the affected participant. *Fixes #11, #12.*
 - [ ] **1.5 STUN/TURN configuration.** ICE servers come from config, with local coturn in development. *Fixes #15.*
