@@ -19,6 +19,9 @@ Requires Node 20+. From the repo root:
 
 ```sh
 npm install              # installs every workspace
-npm run dev:signaling    # starts the signaling server on :5000
+npm run dev:signaling    # signaling server on :5000, reloads on change
+npm run build            # compiles all workspaces
 npm run typecheck        # type-checks all TypeScript workspaces
 ```
+
+The signaling server reads `PORT` and `CORS_ORIGIN` from the environment; see `apps/signaling/.env.example`.

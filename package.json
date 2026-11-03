@@ -6,7 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:signaling": "npm run start -w @together/signaling",
+    "dev:signaling": "npm run dev -w @together/signaling",
+    "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {

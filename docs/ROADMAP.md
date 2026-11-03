@@ -50,7 +50,7 @@ mediasoup must run on a server with a public IP and open UDP ports, so the backe
 ## Phase 0 — Foundation
 
 - [x] **0.1 Monorepo restructure.** npm workspaces with `apps/signaling`, `packages/shared` and a single lockfile; the old client moves to `legacy/client`. *Why:* one install command, and a typed contract between client and server.
-- [ ] **0.2 Signaling server in TypeScript.** Typed events from `@together/shared`, environment-based config, health check endpoint. Same behaviour as before. *Why:* a typed base for everything that follows.
+- [x] **0.2 Signaling server in TypeScript.** Typed events from `@together/shared`, environment-based config, health check endpoint. Same behaviour as before. *Why:* a typed base for everything that follows.
 - [ ] **0.3 Next.js web app.** Scaffold `apps/web` in TypeScript with static export and port the existing pages (home, call); then delete `legacy/client`. *Why:* the old react-scripts 4 client cannot build on Node 17+.
 - [ ] **0.4 Docker Compose for development.** Postgres, Redis and coturn. *Why:* the whole backend runs locally with one command.
 - [ ] **0.5 Tooling and CI.** ESLint, Prettier, type checking, and a GitHub Actions pipeline. *Why:* every push is checked from the start.
