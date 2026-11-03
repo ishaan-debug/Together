@@ -2,6 +2,8 @@
 
 Real-time video conferencing built on WebRTC.
 
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the plan of action and progress.
+
 ## Layout
 
 | Path | What it is |
