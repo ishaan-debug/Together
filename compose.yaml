@@ -1,0 +1,75 @@
+# Backing services for local development: PostgreSQL, Redis and a TURN server.
+#   npm run services:up      # start and wait until healthy
+#   npm run services:down    # stop (data volumes are kept; add -v to wipe them)
+# Defaults are for this machine only. Override them in a root .env file (see .env.example).
+
+name: together
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-together}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-together-dev}
+      POSTGRES_DB: ${POSTGRES_DB:-together}
+    ports:
+      # 5433 on the host, so it does not clash with a locally installed PostgreSQL on 5432.
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # TURN relays media when two browsers cannot connect directly (strict NATs, mobile networks).
+  # Credentials are time-limited and derived from TURN_SECRET (the "TURN REST API" scheme), so the
+  # signaling server can hand them out without storing users here.
+  coturn:
+    image: coturn/coturn:4.7-alpine
+    command:
+      - --listening-port=3478
+      - --realm=together.local
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SECRET:-together-dev-turn-secret}
+      # The address browsers are told to send relayed media to. 127.0.0.1 works for browsers on
+      # this machine; set TURN_EXTERNAL_IP to this machine's LAN address to test from a phone.
+      - --external-ip=${TURN_EXTERNAL_IP:-127.0.0.1}
+      # A small relay port range, published below. Each call uses a few ports.
+      - --min-port=49160
+      - --max-port=49200
+      - --fingerprint
+      - --no-cli
+      - --no-tls
+      - --no-dtls
+      - --log-file=stdout
+      # Docker's private ranges are allowed so local tests can relay; production should deny them.
+      - --allowed-peer-ip=172.16.0.0-172.31.255.255
+      - --allowed-peer-ip=127.0.0.1
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "49160-49200:49160-49200/udp"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 3478"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  postgres-data:
+  redis-data:

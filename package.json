@@ -9,7 +9,9 @@
     "dev:signaling": "npm run dev -w @together/signaling",
     "dev:web": "npm run dev -w @together/web",
     "build": "npm run build --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "services:up": "docker compose up -d --wait",
+    "services:down": "docker compose down"
   },
   "devDependencies": {
     "typescript": "^5.6.3"

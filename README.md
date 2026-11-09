@@ -27,4 +27,23 @@ npm run typecheck        # type-checks all TypeScript workspaces
 The signaling server reads `PORT` and `CORS_ORIGIN` from the environment; see `apps/signaling/.env.example`.
 The web app connects to `NEXT_PUBLIC_SIGNALING_URL` (default `http://localhost:5000`); see `apps/web/.env.example`.
 
+## Backing services
+
+PostgreSQL, Redis and a TURN server (coturn) run in Docker for local development. Nothing uses them yet; later
+roadmap steps connect them.
+
+```sh
+npm run services:up      # start all three and wait until healthy
+npm run services:down    # stop them (data is kept in Docker volumes)
+```
+
+| Service | Address | Notes |
+|---|---|---|
+| PostgreSQL 17 | `localhost:5433` | user `together`, password `together-dev`, database `together`. Port 5433 avoids a local install on 5432. |
+| Redis 8 | `localhost:6379` | |
+| coturn (TURN) | `turn:localhost:3478` | Time-limited credentials derived from `TURN_SECRET`. Relay ports 49160–49200/udp. |
+
+The defaults are for local development only; override them in a root `.env` (see `.env.example`).
+To test calls from a phone on the same Wi-Fi, set `TURN_EXTERNAL_IP` to this machine's LAN address.
+
 To try a call, run both servers and open the app in two browser windows: copy the code from one into the other and press Call.
