@@ -22,7 +22,12 @@ npm run dev:signaling    # signaling server on :5000, reloads on change
 npm run dev:web          # web app on http://localhost:3000
 npm run build            # compiles all workspaces
 npm run typecheck        # type-checks all TypeScript workspaces
+npm run lint             # ESLint over the whole repo
+npm run format           # Prettier; format:check only reports
 ```
+
+CI (`.github/workflows/ci.yml`) runs typecheck, lint, format check and build on every push to `master` and
+`production-new`, and on pull requests.
 
 The signaling server reads `PORT` and `CORS_ORIGIN` from the environment; see `apps/signaling/.env.example`.
 The web app connects to `NEXT_PUBLIC_SIGNALING_URL` (default `http://localhost:5000`); see `apps/web/.env.example`.

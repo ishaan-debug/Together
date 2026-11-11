@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment, useCallback, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 
 import VideoController from "./VideoController";
@@ -9,12 +9,15 @@ import classes from "@/styles/components/video.module.scss";
 
 const Video = () => {
   const constraintsRef = useRef<HTMLDivElement>(null);
-  const { callAccepted, myVideo, userVideo, callEnded, stream, remoteStream, setStream } = useSocketContext();
+  const { callAccepted, myVideo, callEnded, stream, remoteStream, setStream } = useSocketContext();
 
   // The remote stream often arrives before this page has rendered its <video>; attach it once both exist.
-  useEffect(() => {
-    if (userVideo.current && remoteStream) userVideo.current.srcObject = remoteStream;
-  }, [userVideo, remoteStream, callAccepted, callEnded]);
+  const showRemote = useCallback(
+    (video: HTMLVideoElement | null) => {
+      if (video && remoteStream) video.srcObject = remoteStream;
+    },
+    [remoteStream],
+  );
 
   // Known issue (roadmap 1.1): asks for the camera a second time; the call sends the first stream.
   useEffect(() => {
@@ -28,14 +31,9 @@ const Video = () => {
   return (
     <Fragment>
       <motion.div className={classes.userVideo} ref={constraintsRef}>
-        {callAccepted && !callEnded && <video playsInline ref={userVideo} autoPlay />}
+        {callAccepted && !callEnded && <video playsInline ref={showRemote} autoPlay />}
       </motion.div>
-      <motion.div
-        className={classes.myVideo}
-        animate={{ x: -10, y: -10 }}
-        drag={true}
-        dragConstraints={constraintsRef}
-      >
+      <motion.div className={classes.myVideo} animate={{ x: -10, y: -10 }} drag={true} dragConstraints={constraintsRef}>
         {stream && <video playsInline muted ref={myVideo} autoPlay />}
       </motion.div>
 

@@ -29,9 +29,8 @@ type SocketContextValue = {
   callAccepted: boolean;
   callEnded: boolean;
   myVideo: RefObject<HTMLVideoElement | null>;
-  userVideo: RefObject<HTMLVideoElement | null>;
   stream: MediaStream | null;
-  /** The other participant's media, kept until a <video> is mounted to show it. */
+  /** The other participant's media; the call page attaches it to its <video> once that mounts. */
   remoteStream: MediaStream | null;
   name: string;
   setStream: (stream: MediaStream | null) => void;
@@ -60,7 +59,6 @@ export function SocketContextProvider({ children }: { children: ReactNode }) {
   const [name, setName] = useState("Ishaan");
 
   const myVideo = useRef<HTMLVideoElement>(null);
-  const userVideo = useRef<HTMLVideoElement>(null);
   const connectionRef = useRef<Peer.Instance | null>(null);
 
   useEffect(() => {
@@ -70,9 +68,6 @@ export function SocketContextProvider({ children }: { children: ReactNode }) {
       });
 
     const s = getSocket();
-    // The server sends "me" once per connection, so read the id if it is already connected.
-    if (s.id) setMe(s.id);
-
     const onMe = (id: SocketId) => setMe(id);
     const onAny = (event: string, ...args: unknown[]) => console.log(event, args);
     const onCallUser = ({ from, name: callerName, signal }: { from: SocketId; name: string; signal: SignalData }) => {
@@ -144,7 +139,6 @@ export function SocketContextProvider({ children }: { children: ReactNode }) {
         callAccepted,
         callEnded,
         myVideo,
-        userVideo,
         stream,
         remoteStream,
         name,

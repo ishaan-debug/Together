@@ -15,11 +15,6 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  callUser: (payload: {
-    userToCall: SocketId;
-    signalData: SignalData;
-    from: SocketId;
-    name: string;
-  }) => void;
+  callUser: (payload: { userToCall: SocketId; signalData: SignalData; from: SocketId; name: string }) => void;
   answerCall: (payload: { signal: SignalData; to: SocketId }) => void;
 }

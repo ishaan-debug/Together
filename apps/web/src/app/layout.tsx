@@ -10,7 +10,11 @@ import "@/styles/base/removeFocusBorder.scss";
 import "@/styles/base/inputs.scss";
 
 // Downloaded at build time and served with the app, so it also works offline.
-const manrope = Manrope({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--font-manrope" });
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-manrope",
+});
 
 export const metadata: Metadata = {
   title: "Together",

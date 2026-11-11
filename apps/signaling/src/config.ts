@@ -12,7 +12,10 @@ function parsePort(raw: string | undefined, fallback: number): number {
 /** "*" allows any origin; otherwise a comma-separated list of allowed origins. */
 function parseOrigins(raw: string | undefined): string | string[] {
   if (raw === undefined || raw.trim() === "" || raw.trim() === "*") return "*";
-  return raw.split(",").map((origin) => origin.trim()).filter(Boolean);
+  return raw
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 }
 
 export const config = {
