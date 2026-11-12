@@ -8,7 +8,7 @@ import { useSocketContext } from "@/contexts/SocketContext";
 import classes from "@/styles/components/joinMeeting.module.scss";
 
 const JoinMeeting = () => {
-  const { callUser } = useSocketContext();
+  const { callUser, media } = useSocketContext();
   const router = useRouter();
   const idRef = useRef<HTMLInputElement>(null);
   const [idToCall, setIdToCall] = useState("");
@@ -26,6 +26,8 @@ const JoinMeeting = () => {
         autoComplete="Off"
       />
       <button
+        disabled={media.status !== "ready"}
+        title={media.status === "requesting" ? "Waiting for your camera" : undefined}
         onClick={() => {
           if (idRef.current?.value) {
             callUser(idToCall);

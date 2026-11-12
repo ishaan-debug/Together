@@ -18,6 +18,13 @@ button {
     margin-right: 10px;
   }
 
+  // Not available yet, e.g. Call while the camera is still starting.
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
   &:active,
   &:visited {
     background-color: orange;

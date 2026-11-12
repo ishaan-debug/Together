@@ -56,7 +56,7 @@ mediasoup must run on a server with a public IP and open UDP ports, so the backe
 
 ## Phase 1 — Production-quality 1:1 calling
 
-- [ ] **1.1 `useLocalMedia` hook.** Request the camera once; handle denied permission and non-HTTPS pages; stop tracks on leave. *Fixes audit #6, #8, #10, #13.*
+- [x] **1.1 `useLocalMedia` hook.** Request the camera once; handle denied permission and non-HTTPS pages; stop tracks on leave. *Fixes audit #6, #8, #10, #13.*
 - [ ] **1.2 Native `RTCPeerConnection` wrapper.** Replaces simple-peer, with proper error handling. *Fixes #9, #14 and drops simple-peer (#7 was fixed in 0.3).*
 - [ ] **1.3 Rooms and invite links.** `/room/[id]` instead of socket IDs; join and leave are safe to repeat. *Fixes #16, #18.*
 - [ ] **1.4 Call lifecycle events.** Decline, hang-up and "other person left" are sent only to the affected participant. *Fixes #11, #12.*
@@ -103,7 +103,7 @@ mediasoup must run on a server with a public IP and open UDP ports, so the backe
 - [ ] **4.6 Browser end-to-end tests** with Playwright and fake camera/microphone devices.
 - [ ] **4.7 Load tests** with simulated participants; document the bottlenecks found.
 - [ ] **4.8 Graceful shutdown** that lets active sessions finish.
-- [ ] **4.9 Production deployment.** Docker images, HTTPS and secure WebSockets.
+- [ ] **4.9 Production deployment.** Docker images, HTTPS and secure WebSockets. The static host must serve Next.js's `.txt` route payloads as text; otherwise every page change is a full reload, which drops the call.
 - [ ] **4.10 Documentation.** Architecture decision records, architecture overview, README.
 
 ---

@@ -9,12 +9,14 @@ import classes from "@/styles/components/notification.module.scss";
 
 const Notification = () => {
   const router = useRouter();
-  const { answerCall, setCall } = useSocketContext();
+  const { answerCall, setCall, media } = useSocketContext();
   return (
     <motion.div className={classes.box} animate={{ y: -20 }}>
       <span>Incoming call</span>
       <button
         className={classes.green}
+        aria-label="Answer"
+        disabled={media.status !== "ready"}
         onClick={() => {
           answerCall();
           router.push("/video");
@@ -22,10 +24,10 @@ const Notification = () => {
       >
         <PhoneIncoming />
       </button>
-      <button className={classes.red} onClick={() => setCall({ isReceivingCall: false })}>
+      <button className={classes.red} aria-label="Decline" onClick={() => setCall({ isReceivingCall: false })}>
         <PhoneSlash />
       </button>
-      <button className={classes.mute} onClick={() => setCall({ isReceivingCall: false })}>
+      <button className={classes.mute} aria-label="Dismiss" onClick={() => setCall({ isReceivingCall: false })}>
         <PhoneDisconnect />
       </button>
     </motion.div>

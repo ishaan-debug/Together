@@ -1,9 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { io, type Socket } from "socket.io-client";
 import Peer from "simple-peer/simplepeer.min.js";
 import type { ClientToServerEvents, ServerToClientEvents, SignalData, SocketId } from "@together/shared";
+
+import { useLocalMedia, type LocalMedia } from "@/hooks/useLocalMedia";
 
 type SignalingSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -28,12 +30,13 @@ type SocketContextValue = {
   call: CallState;
   callAccepted: boolean;
   callEnded: boolean;
-  myVideo: RefObject<HTMLVideoElement | null>;
+  /** This device's camera and microphone, with its status and any error to show. */
+  media: LocalMedia;
+  /** Shorthand for media.stream; null until the camera is ready. */
   stream: MediaStream | null;
   /** The other participant's media; the call page attaches it to its <video> once that mounts. */
   remoteStream: MediaStream | null;
   name: string;
-  setStream: (stream: MediaStream | null) => void;
   setName: (name: string) => void;
   setCall: (call: CallState) => void;
   callUser: (id: SocketId) => void;
@@ -50,7 +53,8 @@ export function useSocketContext() {
 }
 
 export function SocketContextProvider({ children }: { children: ReactNode }) {
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const media = useLocalMedia();
+  const stream = media.stream;
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [me, setMe] = useState("loading...");
   const [call, setCall] = useState<CallState>({ isReceivingCall: false });
@@ -58,15 +62,9 @@ export function SocketContextProvider({ children }: { children: ReactNode }) {
   const [callEnded, setCallEnded] = useState(false);
   const [name, setName] = useState("Ishaan");
 
-  const myVideo = useRef<HTMLVideoElement>(null);
   const connectionRef = useRef<Peer.Instance | null>(null);
 
   useEffect(() => {
-    if (navigator.mediaDevices)
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((currentStream) => {
-        setStream(currentStream);
-      });
-
     const s = getSocket();
     const onMe = (id: SocketId) => setMe(id);
     const onAny = (event: string, ...args: unknown[]) => console.log(event, args);
@@ -85,10 +83,12 @@ export function SocketContextProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Calls need the camera: without it the other side would get a one-way call.
   const answerCall = () => {
+    if (!stream) return;
     setCallAccepted(true);
 
-    const peer = new Peer({ initiator: false, trickle: false, stream: stream ?? undefined });
+    const peer = new Peer({ initiator: false, trickle: false, stream });
 
     peer.on("signal", (data) => {
       getSocket().emit("answerCall", { signal: data, to: call.from! });
@@ -102,7 +102,8 @@ export function SocketContextProvider({ children }: { children: ReactNode }) {
   };
 
   const callUser = (id: SocketId) => {
-    const peer = new Peer({ initiator: true, trickle: false, stream: stream ?? undefined });
+    if (!stream) return;
+    const peer = new Peer({ initiator: true, trickle: false, stream });
 
     peer.on("signal", (data) => {
       console.log("Calling: " + id);
@@ -127,7 +128,9 @@ export function SocketContextProvider({ children }: { children: ReactNode }) {
 
   const leaveCall = () => {
     setCallEnded(true);
-    connectionRef.current!.destroy();
+    // There may be no connection yet, e.g. when hanging up before the other side answers.
+    connectionRef.current?.destroy();
+    media.stop();
     window.location.replace("/");
   };
 
@@ -138,11 +141,10 @@ export function SocketContextProvider({ children }: { children: ReactNode }) {
         call,
         callAccepted,
         callEnded,
-        myVideo,
+        media,
         stream,
         remoteStream,
         name,
-        setStream,
         setName,
         setCall,
         callUser,
