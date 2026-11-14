@@ -2,10 +2,10 @@
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { io, type Socket } from "socket.io-client";
-import Peer from "simple-peer/simplepeer.min.js";
 import type { ClientToServerEvents, ServerToClientEvents, SignalData, SocketId } from "@together/shared";
 
 import { useLocalMedia, type LocalMedia } from "@/hooks/useLocalMedia";
+import { createPeer, isSignalData, type Peer } from "@/lib/peer";
 
 type SignalingSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -36,6 +36,8 @@ type SocketContextValue = {
   stream: MediaStream | null;
   /** The other participant's media; the call page attaches it to its <video> once that mounts. */
   remoteStream: MediaStream | null;
+  /** Why the call failed, if it did; the call page shows it with a way out. */
+  callError: string | null;
   name: string;
   setName: (name: string) => void;
   setCall: (call: CallState) => void;
@@ -61,8 +63,9 @@ export function SocketContextProvider({ children }: { children: ReactNode }) {
   const [callAccepted, setCallAccepted] = useState(false);
   const [callEnded, setCallEnded] = useState(false);
   const [name, setName] = useState("Ishaan");
+  const [callError, setCallError] = useState<string | null>(null);
 
-  const connectionRef = useRef<Peer.Instance | null>(null);
+  const connectionRef = useRef<Peer | null>(null);
 
   useEffect(() => {
     const s = getSocket();
@@ -72,64 +75,71 @@ export function SocketContextProvider({ children }: { children: ReactNode }) {
       console.log(from);
       setCall({ isReceivingCall: true, from, name: callerName, signal });
     };
+    // Registered once for the whole session; the answer goes to whichever call is in progress.
+    const onCallAccepted = (signal: SignalData) => {
+      const peer = connectionRef.current;
+      if (!peer) return;
+      setCallAccepted(true);
+      peer.signal(signal);
+    };
 
     s.on("me", onMe);
     s.onAny(onAny);
     s.on("callUser", onCallUser);
+    s.on("callAccepted", onCallAccepted);
     return () => {
       s.off("me", onMe);
       s.offAny(onAny);
       s.off("callUser", onCallUser);
+      s.off("callAccepted", onCallAccepted);
     };
   }, []);
+
+  // Starts a connection for a new call, replacing any previous one.
+  const startPeer = (initiator: boolean, mediaStream: MediaStream, onSignal: (signal: SignalData) => void) => {
+    connectionRef.current?.destroy();
+    setCallError(null);
+    const peer = createPeer({
+      initiator,
+      stream: mediaStream,
+      onSignal,
+      onStream: setRemoteStream,
+      onError: (error) => {
+        console.error("Call failed:", error, error.cause ?? "");
+        // Ignore errors from a connection that has already been replaced.
+        if (connectionRef.current === peer) setCallError(error.message);
+      },
+    });
+    connectionRef.current = peer;
+    return peer;
+  };
 
   // Calls need the camera: without it the other side would get a one-way call.
   const answerCall = () => {
     if (!stream) return;
+    const from = call.from;
+    if (!from || !isSignalData(call.signal)) {
+      setCallError("This call can no longer be answered.");
+      return;
+    }
     setCallAccepted(true);
-
-    const peer = new Peer({ initiator: false, trickle: false, stream });
-
-    peer.on("signal", (data) => {
-      getSocket().emit("answerCall", { signal: data, to: call.from! });
-    });
-
-    peer.on("stream", (currentStream: MediaStream) => setRemoteStream(currentStream));
-
-    peer.signal(call.signal as Peer.SignalData);
-
-    connectionRef.current = peer;
+    const peer = startPeer(false, stream, (signal) => getSocket().emit("answerCall", { signal, to: from }));
+    peer.signal(call.signal);
   };
 
   const callUser = (id: SocketId) => {
     if (!stream) return;
-    const peer = new Peer({ initiator: true, trickle: false, stream });
-
-    peer.on("signal", (data) => {
+    startPeer(true, stream, (signal) => {
       console.log("Calling: " + id);
-      getSocket().emit("callUser", {
-        userToCall: id,
-        signalData: data,
-        from: me,
-        name,
-      });
+      getSocket().emit("callUser", { userToCall: id, signalData: signal, from: me, name });
     });
-
-    peer.on("stream", (currentStream: MediaStream) => setRemoteStream(currentStream));
-
-    getSocket().on("callAccepted", (signal) => {
-      setCallAccepted(true);
-      console.log("accepted");
-      peer.signal(signal as Peer.SignalData);
-    });
-
-    connectionRef.current = peer;
   };
 
   const leaveCall = () => {
     setCallEnded(true);
     // There may be no connection yet, e.g. when hanging up before the other side answers.
     connectionRef.current?.destroy();
+    connectionRef.current = null;
     media.stop();
     window.location.replace("/");
   };
@@ -144,6 +154,7 @@ export function SocketContextProvider({ children }: { children: ReactNode }) {
         media,
         stream,
         remoteStream,
+        callError,
         name,
         setName,
         setCall,

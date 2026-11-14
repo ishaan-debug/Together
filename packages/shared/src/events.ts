@@ -4,8 +4,11 @@
 
 export type SocketId = string;
 
-/** Session description passed through the server untouched. */
-export type SignalData = unknown;
+/**
+ * A WebRTC session description (offer or answer) with all ICE candidates included.
+ * The server passes it through untouched; the receiving browser validates it.
+ */
+export type SignalData = { type: "offer" | "answer"; sdp: string };
 
 export interface ServerToClientEvents {
   me: (id: SocketId) => void;
